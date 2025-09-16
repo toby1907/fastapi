@@ -2,16 +2,20 @@
 from fastapi import Depends, HTTPException, status
 import jwt
 from datetime import datetime, timedelta
-
+from sqlalchemy.orm import Session
+import database
+import models
+from routers import user
 from schemas import TokenData
 from fastapi.security import OAuth2PasswordBearer
+from config import settings
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login") 
 
-SECRET_KEY = "your_secret_key"  # Change this to your actual secret key
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = settings.secret_key  # Change this to your actual secret key
+ALGORITHM = settings.algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 
 def createAccessToken(data: dict):
     # This function should create a JWT token using a library like PyJWT
@@ -38,10 +42,13 @@ def verifyAccessToken(token: str, credentials_exception):
         raise credentials_exception
     return token_data
 
-def getCurrentUser(token: str = Depends(oauth2_scheme)):
+def getCurrentUser(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
-    )
-    return verifyAccessToken(token, credentials_exception)
+    ) 
+    
+    token = verifyAccessToken(token, credentials_exception)
+    user = db.query(models.User).filter(models.User.id == token.id).first()
+    return user

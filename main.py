@@ -14,7 +14,7 @@ from database import engine, get_db
 from schemas import PostBase, PostCreate, PostResponse, UserCreate, UserCreateResponse
 from sqlalchemy.exc import IntegrityError
 from utils import hashPassword
-from routers import post, user, auth 
+from routers import post, user, auth, vote 
 
 
 
@@ -49,6 +49,7 @@ my_posts = [
 app.include_router(post.router)
 app.include_router(user.router)
 app.include_router(auth.router)
+app.include_router(vote.router)
 @app.get("/")
 async def root():
     return {"message": "successfully created a post"} 

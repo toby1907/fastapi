@@ -1,8 +1,9 @@
 
 from datetime import datetime
-from typing import Optional, Union
+from typing import Annotated, Literal, Optional, Union
 from pydantic import BaseModel, EmailStr, Field, validator,field_validator
 
+from pydantic.types import conint
 
 
 class PostBase(BaseModel):
@@ -13,9 +14,21 @@ class PostBase(BaseModel):
 class PostCreate(PostBase):
     pass
 
+
+class UserCreateResponse(BaseModel):
+    id: int
+    email: EmailStr
+    create_at: datetime
+    
+    class Config:
+        orm_mode = True
+        
 class PostResponse(PostBase):
     id: int
     create_at: datetime
+    owner_id: int
+    owner: UserCreateResponse  # Nested user info
+    
     
     class Config:
         orm_mode = True
@@ -32,13 +45,7 @@ class UserCreate(BaseModel):
         # Add more checks like uppercase, numbers, etc.
         return v
     
-class UserCreateResponse(BaseModel):
-    id: int
-    email: EmailStr
-    create_at: datetime
-    
-    class Config:
-        orm_mode = True
+
 
 # You can add more schemas as needed, e.g., for user login, token response, etc.    
 class UserLogin(BaseModel):
@@ -51,5 +58,10 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     id: Union[int, str]
+    
+    
+class Vote(BaseModel):
+    post_id: int
+    dir: Literal[0, 1]  # 0 = remove vote, 1 = add vote
 
 
