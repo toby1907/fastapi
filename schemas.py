@@ -33,6 +33,12 @@ class PostResponse(PostBase):
     class Config:
         orm_mode = True
         
+class PostOut(PostResponse):
+    votes: int
+    
+    class Config:
+        orm_mode = True
+        
 class UserCreate(BaseModel):
     email: EmailStr  # This automatically validates email format
     password: str = Field(..., min_length=6)  # Requires min 6 characters

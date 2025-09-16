@@ -2,12 +2,13 @@ from typing import Optional, List
 from sqlalchemy.exc import IntegrityError
 import models
 import oauth2
-from schemas import PostResponse,PostCreate,PostBase
+from schemas import PostOut, PostResponse,PostCreate,PostBase
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 from database import get_db
 from utils import hashPassword
 import logging
+from sqlalchemy import func
 
 logger = logging.getLogger(__name__)
 
@@ -16,35 +17,58 @@ router = APIRouter(
     prefix="/posts",tags=["Posts"]
     )
 
-@router.get("/", response_model=List[PostResponse])
+from sqlalchemy.orm import selectinload
+
+@router.get("/", response_model=List[PostOut])
 async def get_posts(
     db: Session = Depends(get_db), 
     current_user: int = Depends(oauth2.getCurrentUser),
-    limit: Optional[int] = 10,  # Default to 10 posts
-    skip: Optional[int] = 0,    # For pagination
-    search: Optional[str] = None  # For searching
+    limit: int = 10,
+    skip: int = 0,
+    search: Optional[str] = None
 ):
     """
     Get all posts with optional filtering and pagination
-    
-    - **limit**: Number of posts to return (default: 10)
-    - **skip**: Number of posts to skip (for pagination)
-    - **search**: Search term to filter posts by title
     """
     
-    # Build query
-    query = db.query(models.Post)
+    # Build query with vote count and eager loading
+    query = db.query(
+        models.Post, 
+        func.count(models.Vote.post_id).label("votes")
+    ).join(
+        models.Vote, 
+        models.Vote.post_id == models.Post.id, 
+        isouter=True
+    ).options(selectinload(models.Post.owner)).group_by(models.Post.id)
     
     # Add search filter if provided
     if search:
         query = query.filter(models.Post.title.contains(search))
     
-    # Apply pagination
-    posts = query.offset(skip).limit(limit).all()
+    # Apply pagination and execute
+    results = query.offset(skip).limit(limit).all()
     
-    return posts
+    # Convert to proper format
+    posts_with_votes = []
+    for post, votes_count in results:
+        # Create the response structure manually
+        post_data = {
+            "id": post.id,
+            "title": post.title,
+            "content": post.content,
+            "published": post.published,
+            "create_at": post.create_at,
+            "owner_id": post.owner_id,
+            "owner": {  # Manually create the owner object
+                "id": post.owner.id,
+                "email": post.owner.email,
+                "create_at": post.owner.create_at
+            },
+            "votes": votes_count
+        }
+        posts_with_votes.append(post_data)
     
-
+    return posts_with_votes
 @router.post("/", status_code= status.HTTP_201_CREATED, response_model= PostResponse)
 async def create_post(post: PostCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.getCurrentUser)):
     print(current_user.email)
