@@ -33,6 +33,7 @@ class User(Base):
     create_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default= text('now()')) 
     # Relationship to posts (optional)
     posts = relationship("Post", back_populates="owner", cascade="all, delete-orphan")
+    phone_number = Column(String, nullable=True)  # New field for phone number
     
     
     

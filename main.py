@@ -15,31 +15,41 @@ from schemas import PostBase, PostCreate, PostResponse, UserCreate, UserCreateRe
 from sqlalchemy.exc import IntegrityError
 from utils import hashPassword
 from routers import post, user, auth, vote 
+from fastapi.middleware.cors import CORSMiddleware
 
 
 
 
-models.Base.metadata.create_all(bind=engine)
+models.Base.metadata.create_all(bind=engine) # Creating the database tables here not neccessary if using alembic
 
 
 
 app = FastAPI()
 
+origins = ["*"]
 
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # Frontend URL(s)
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
+)
 
 
    
     
-while True:
-    try:
-        conn = psycopg2.connect(host="localhost", database="postgres", user="postgres", password="cheetohan1@", cursor_factory=RealDictCursor)
-        cursor = conn.cursor()
-        print("Database connection was successful!")
-        break
-    except Exception as error:
-        print("Database connection failed!")
-        print("Error:", error)
-        time.sleep(2)
+# while True:
+#     try:
+#         conn = psycopg2.connect(host="localhost", database="postgres", user="postgres", password="cheetohan1@", cursor_factory=RealDictCursor)
+#         cursor = conn.cursor()
+#         print("Database connection was successful!")
+#         break
+#     except Exception as error:
+#         print("Database connection failed!")
+#         print("Error:", error)
+#         time.sleep(2)
         
 
 my_posts = [

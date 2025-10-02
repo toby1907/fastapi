@@ -9,6 +9,7 @@ from database import get_db
 from utils import hashPassword
 import logging
 from sqlalchemy import func
+from sqlalchemy.orm import selectinload
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +17,6 @@ logger = logging.getLogger(__name__)
 router = APIRouter(
     prefix="/posts",tags=["Posts"]
     )
-
-from sqlalchemy.orm import selectinload
 
 @router.get("/", response_model=List[PostOut])
 async def get_posts(
@@ -69,6 +68,7 @@ async def get_posts(
         posts_with_votes.append(post_data)
     
     return posts_with_votes
+
 @router.post("/", status_code= status.HTTP_201_CREATED, response_model= PostResponse)
 async def create_post(post: PostCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.getCurrentUser)):
     print(current_user.email)
