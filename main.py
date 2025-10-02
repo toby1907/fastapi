@@ -20,7 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 
 
-models.Base.metadata.create_all(bind=engine) # Creating the database tables here not neccessary if using alembic
+# models.Base.metadata.create_all(bind=engine) # Creating the database tables here not neccessary if using alembic
 
 
 
